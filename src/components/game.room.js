@@ -129,7 +129,7 @@ const useStyles = makeStyles({
 })
 
 const ACTIONS = [-1, 0, 1]
-const GameRoom = () => {
+const GameRoom = ({ selectedRoom }) => {
   const classes = useStyles()
   const { socket, unsubscribeEvents } = useContext(SocketContext)
   const { rooms, user } = useSelector((state) => state.playReducer);
@@ -150,24 +150,20 @@ const GameRoom = () => {
 
   useEffect(() => {
     resetState()
-    unsubscribeEvents()
-    if (user?.room) {
-      subscibeEvents()
+    if (selectedRoom.name) {
+      unsubscribeEvents()
+      subscribeEvents()
     }
-  }, [user?.room])
+  }, [selectedRoom])
 
   useEffect(() => {
     resetState()
-    if (user.room) {
-      resetState()
-      socket.emit('letsPlay', {})
-    }
-    if (user.room?.type === 'cpu') {
+    if (selectedRoom?.type === 'cpu') {
       setIsFirstUser(user.socketId)
     } else {
       setIsFirstUser(null)
     }
-  }, [user.room])
+  }, [selectedRoom])
 
   useEffect(() => {
     if (!isFirstUser && turn.user) {
@@ -190,12 +186,9 @@ const GameRoom = () => {
     gameRoom.scrollTop = scrollHeight
   }, [result])
 
-  const subscibeEvents = () => {
+  const subscribeEvents = () => {
     socket.on('activateYourTurn', (msg) => {
       setTurn(prevState => ({ ...prevState, ...msg }))
-      console.log('ActivateYourTurn Event', msg);
-      // if (!isFirst.user && msg.state === 'play' && msg.user === user.socketId)
-      //   setIsFirst({ ...isFirst, user: msg.user})
     })
     socket.on('randomNumber', (msg) => {
       const data = { selectedNumber, ...msg }
@@ -205,13 +198,12 @@ const GameRoom = () => {
       else setResult((prevState) => ([...prevState, data]))
     })
     socket.on('gameOver', (msg) => {
-      // console.log("Gameover Event", msg);
       socket.emit('leaveRoom')
       setGameOver(msg)
       unsubscribeEvents()
     })
     socket.on('onReady', (msg) => {
-      console.log("On ready event", msg);
+      msg.state && socket.emit('letsPlay')
       setIsReady(msg.state)
     })
   }
@@ -233,7 +225,7 @@ const GameRoom = () => {
 
   const handleNewGame = () => {
     resetState()
-    subscibeEvents()
+    subscribeEvents()
     const { name, type } = rooms.find(r => r.name === user?.room?.name)
     socket.emit('joinRoom', {
       username: user.user,
@@ -280,7 +272,6 @@ const GameRoom = () => {
   }
 
   const renderGameActions = () => {
-    // console.log('render actions..............,',turn , user);
     return <Box className={classes.buttonWrapper}>
       {
         (isReady || result.length)

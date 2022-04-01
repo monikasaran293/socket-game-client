@@ -18,7 +18,8 @@ export const SocketContext = createContext()
 const Home = () => {
   const dispatch = useDispatch();
   const [socket, setSocket] = useState(null)
-  const { rooms } = useSelector((state) => state.playReducer);
+  const { user } = useSelector((state) => state.playReducer);
+  const [selectedRoom, setSelectedRoom] = useState({})
 
   useEffect(() => {
     dispatch(getRooms())
@@ -44,6 +45,17 @@ const Home = () => {
     }
   }, [socket])
 
+  useEffect(() => {
+    if (selectedRoom.name) {
+      const { name, type } = selectedRoom
+      socket.emit('joinRoom', {
+        username: user.user,
+        room: name,
+        roomType: type
+      })
+    }
+  }, [selectedRoom])
+
   const unsubscribeEvents = () => {
     socket.off('activateYourTurn')
     socket.off('randomNumber')
@@ -58,10 +70,10 @@ const Home = () => {
         <Header />
         <StyledRoomWrapper container>
           <Grid item xs={4}>
-            <SideNav />
+            <SideNav selectedRoom={selectedRoom} setSelectedRoom={setSelectedRoom} />
           </Grid>
           <Grid item xs={8}>
-            <GameRoom />
+            <GameRoom selectedRoom={selectedRoom} />
           </Grid>
         </StyledRoomWrapper>
         <Footer />

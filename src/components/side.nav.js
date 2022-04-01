@@ -1,11 +1,9 @@
-import { useState, useContext, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 import { Box, Typography } from "@mui/material"
 import { makeStyles } from "@mui/styles";
 
 import { ReactComponent as ArrowIcon } from "../assets/arrow.svg";
-import { SocketContext } from '../pages/home';
 
 const useStyles = makeStyles({
   sideNav: {
@@ -38,27 +36,9 @@ const useStyles = makeStyles({
   }
 });
 
-const SideNav = () => {
-  const { socket, unsubscribeEvents } = useContext(SocketContext)
-  const dispatch = useDispatch();
-
-  const { rooms, user } = useSelector((state) => state.playReducer);
-
-  const [selectedRoom, setSelectedRoom] = useState({})
+const SideNav = ({ selectedRoom, setSelectedRoom }) => {
   const classes = useStyles();
-
-  useEffect(() => {
-    if (selectedRoom.name) {
-      const { name, type } = selectedRoom
-      socket.emit('joinRoom', {
-        username: user.user,
-        room: name,
-        roomType: type
-      })
-    }
-    unsubscribeEvents()
-  }, [selectedRoom])
-
+  const { rooms } = useSelector((state) => state.playReducer);
 
   return (
     <Box className={classes.sideNav}>
